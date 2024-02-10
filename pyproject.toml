@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "mathpreter"
+version = "0.1.0"
+description = "Math Interpreter based on LaT Syntax. Inspired by <Writing An Interpreter In Go>, But thiinterpreter is written in python."
+authors = ["craftsangjae <craftsangjae@gmail.com>"]
+license = "bsd"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+flake8 = "^7.0.0"
+black = "^24.1.1"
+pre-commit = "^3.6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
