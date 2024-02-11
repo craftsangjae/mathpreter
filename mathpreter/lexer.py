@@ -45,6 +45,9 @@ class Lexer:
             token = Token(self.char)
             self.next_char()
             return token
+        elif self.char == '':
+            self.next_char()
+            return Token("")
 
         # lexing is failed...
         raise LexerException(f"lexing is failed. position: {self.c_pos}")
