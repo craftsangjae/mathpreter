@@ -20,6 +20,8 @@ from mathpreter.token import TokenType, Token
         ("%", TokenType.MODULO),
         ("^", TokenType.EXPONENTIATION),
         ("_", TokenType.UNDERSCORE),
+        (";", TokenType.SEMICOLON),
+        ('let', TokenType.LET),
 
         ("\sum", TokenType.SUM),
         ("\prod", TokenType.PROD),

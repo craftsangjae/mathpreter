@@ -13,6 +13,8 @@ class TokenType(Enum):
     IDENT = "IDENT"
     NUMBER = "NUMBER"
 
+    LET = "let"
+
     ####
     # Arithmetic Operators
     ####
@@ -28,6 +30,7 @@ class TokenType(Enum):
     ###
     ASSIGN = "="
     UNDERSCORE = "_"
+    SEMICOLON = ";"
 
     ####
     # Specific Latex Syntax
@@ -56,11 +59,13 @@ class TokenType(Enum):
 
             TokenType.ASSIGN,
             TokenType.UNDERSCORE,
+            TokenType.SEMICOLON,
 
             TokenType.LPAREN,
             TokenType.RPAREN,
             TokenType.LBRACE,
-            TokenType.RBRACE
+            TokenType.RBRACE,
+
         )
 
     @classmethod
@@ -76,6 +81,12 @@ class TokenType(Enum):
             TokenType.CPI,
             TokenType.PI,
             TokenType.E,
+        )
+
+    @classmethod
+    def reserved_words(cls) -> Iterable["TokenType"]:
+        return (
+            TokenType.LET,
         )
 
     def __hash__(self):
@@ -113,6 +124,12 @@ class Token:
                 return
 
         for token in TokenType.latex_words():
+            if word == token:
+                self.type = token
+                self.literal = word
+                return
+
+        for token in TokenType.reserved_words():
             if word == token:
                 self.type = token
                 self.literal = word

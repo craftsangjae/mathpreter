@@ -18,12 +18,14 @@ from mathpreter.token import TokenType, Token
         ("/", TokenType.DIVIDE),
         ("%", TokenType.MODULO),
         ("_", TokenType.UNDERSCORE),
+        (";", TokenType.SEMICOLON),
         ("\sum", TokenType.SUM),
         ("\prod", TokenType.PROD),
         ("\mathrm", TokenType.MATH_RM),
         ("\Pi", TokenType.CPI),
         ("\pi", TokenType.PI),
         ("\exp", TokenType.E),
+        ("let", TokenType.LET),
         ("(", TokenType.LPAREN),
         (")", TokenType.RPAREN),
         ("{", TokenType.LBRACE),
@@ -34,6 +36,17 @@ def test_single_size_equation(test_input, expected_type):
     token = lexer.next_token()
 
     assert token.type == expected_type
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    ["\pbcd", "#123x"]
+)
+def test_check_if_token_is_illegal(test_input):
+    lexer = Lexer(test_input)
+    token = lexer.next_token()
+
+    assert token.type == TokenType.ILLEGAL
 
 
 @pytest.mark.parametrize(
