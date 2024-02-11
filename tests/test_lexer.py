@@ -53,14 +53,22 @@ def test_check_if_token_is_illegal(test_input):
     "test_input,expected_types,expected_values",
     [("32.5+25.2-1",
       [TokenType.NUMBER, TokenType.PLUS, TokenType.NUMBER, TokenType.MINUS, TokenType.NUMBER],
-      ["32.5", "+", "25", "-", "1"]),
+      ["32.5", "+", "25.2", "-", "1"]),
      ("\sum_{x=12}^{19}{3*x}",
       [TokenType.SUM, TokenType.UNDERSCORE, TokenType.LBRACE, TokenType.IDENT, TokenType.ASSIGN, TokenType.NUMBER,
        TokenType.RBRACE,
        TokenType.EXPONENTIATION, TokenType.LBRACE, TokenType.NUMBER, TokenType.RBRACE, TokenType.LBRACE,
        TokenType.NUMBER, TokenType.MULTIPLY, TokenType.IDENT, TokenType.RBRACE],
       ["\sum", "_", "{", "x", "=", "12", "}", "^", "{", "19", "}", "{", "3", "*", "x", "}"]),
-     ],
+     ("let x = -5;",
+      [TokenType.LET, TokenType.IDENT, TokenType.ASSIGN, TokenType.MINUS, TokenType.NUMBER, TokenType.SEMICOLON],
+      ["let", "x", "=", "-", "5", ";"]
+      )
+     ]
 )
 def test_middle_size_equation(test_input, expected_types, expected_values):
-    assert Token(test_input).type == TokenType.ILLEGAL
+    lexer = Lexer(test_input)
+    for expected_type, expected_value in zip(expected_types, expected_values):
+        token = lexer.next_token()
+        assert token.type == expected_type
+        assert token.literal == expected_value

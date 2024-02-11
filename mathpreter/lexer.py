@@ -43,6 +43,7 @@ class Lexer:
             return self.read_number()
         elif self.char in TokenType.symbols():
             token = Token(self.char)
+            self.next_char()
             return token
 
         # lexing is failed...
