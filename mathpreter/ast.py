@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
+from decimal import Decimal
 
 from mathpreter.token import Token
 
@@ -60,7 +61,34 @@ class ExpressionStatement(Statement):
 class Identifier(Expression):
     """ 식별자
     """
-    pass
+    token: Token
+    value: str
+
+    def __init__(self, token: Token):
+        self.token = token
+        self.value = token.literal
+
+    def literal(self) -> str:
+        return self.token.literal
+
+    def __str__(self):
+        return str(self.token.literal)
+
+
+class NumberLiteral(Expression):
+    """ 숫자 리터럴 """
+    token: Token
+    value: Decimal
+
+    def __init__(self, token: Token):
+        self.token = token
+        self.value = Decimal(token.literal)
+
+    def literal(self) -> str:
+        return self.token.literal
+
+    def __str__(self):
+        return str(self.token.literal)
 
 
 class LetStatement(Statement):
@@ -89,7 +117,20 @@ class AssignStatement(Statement):
 
 class PrefixExpression(Expression):
     """전위연산자 표현식"""
-    pass
+    token: Token
+    operator: str
+    right: Expression
+
+    def __init__(self, token: Token, right: Expression):
+        self.token = token
+        self.operator = token.literal
+        self.right = right
+
+    def literal(self) -> str:
+        return self.token.literal
+
+    def __str__(self):
+        return f"{self.operator}{self.right}"
 
 
 class InfixExpression(Expression):
