@@ -1,6 +1,6 @@
 import pytest
 
-from mathpreter.ast import LetStatement, ExpressionStatement, MathReducerExpression
+from mathpreter.ast import LetStatement, ExpressionStatement, MathReducerExpression, CombinatoricsExpression
 from mathpreter.lexer import Lexer
 from mathpreter.parser import Parser
 
@@ -67,3 +67,27 @@ def test_single_expression_statement_with_tex_reduce_op(
     assert str(expr.start) == expected_start
     assert str(expr.end) == expected_end
     assert str(expr.body) == expected_body
+
+
+@pytest.mark.parametrize(
+    "test_input, expected_token, expected_identifier, expected_left, expected_right",
+    [
+        ("_{1+3}\mathrm{P}_{k}", "_", "P", "(1+3)", "k"),
+        ("_{1+3}\mathrm{\Pi}_{k*7}", "_", "\Pi", "(1+3)", "(k*7)"),
+    ],
+)
+def test_single_expression_statement_with_Combinatorics(
+        test_input, expected_token, expected_identifier, expected_left, expected_right
+):
+    lexer = Lexer(test_input)
+    parser = Parser(lexer)
+    program = parser.parse_program()
+    assert len(program.statements) == 1
+
+    stmt: ExpressionStatement = program.statements[0]
+    expr: CombinatoricsExpression = stmt.expression
+
+    assert expr.token.literal == expected_token
+    assert expr.identifier.literal() == expected_identifier
+    assert str(expr.left) == expected_left
+    assert str(expr.right) == expected_right

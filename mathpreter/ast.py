@@ -194,21 +194,21 @@ class CombinatoricsExpression(Expression):
     : _{n}\mathrm{\Pi}_{k}
 
     3. combination with repetition(중복 조합)
-    : _{n}\mathrm{\Pi}_{k}
+    : _{n}\mathrm{H}_{k}
     """
     token: Token
+    identifier: Expression
     left: Expression
-    body: Expression
     right: Expression
 
-    def __init__(self, token: Token, left: Expression, body: Expression, right: Expression):
+    def __init__(self, token: Token, identifier: Identifier, left: Expression, right: Expression):
         self.token = token
+        self.identifier = identifier
         self.left = left
-        self.body = body
         self.right = right
 
     def literal(self) -> str:
         return self.token.literal
 
     def __str__(self):
-        return f"_{{{self.left}}}\mathrm{{{self.body.literal()}}}_{{{self.right}}})"
+        return f"_{{{self.left}}}\mathrm{{{self.identifier.literal()}}}_{{{self.right}}})"

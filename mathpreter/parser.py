@@ -4,7 +4,7 @@ from typing import List, Dict, Callable, Optional
 from mathpreter.ast import (
     Expression, Program, Statement,
     LetStatement, Identifier, ExpressionStatement,
-    PrefixExpression, NumberLiteral, InfixExpression, MathReducerExpression
+    PrefixExpression, NumberLiteral, InfixExpression, MathReducerExpression, CombinatoricsExpression
 )
 from mathpreter.errors import ParserException
 from mathpreter.lexer import Lexer
@@ -66,6 +66,7 @@ class Parser:
         self.prefix_parse_fns[TokenType.MINUS] = self.parse_prefix_single_expression
         self.prefix_parse_fns[TokenType.LPAREN] = self.parse_grouped_expression
         self.prefix_parse_fns[TokenType.TEX_REDUCE_OP] = self.parse_prefix_reducer_expression
+        self.prefix_parse_fns[TokenType.UNDERSCORE] = self.parse_prefix_combinatorics_expression
 
     def register_infix_parse_fns(self):
         self.infix_parse_fns = {}
@@ -236,3 +237,27 @@ class Parser:
         right = self.parse_expression(priority)
 
         return InfixExpression(token, left, right)
+
+    def parse_prefix_combinatorics_expression(self) -> CombinatoricsExpression:
+        token = self.curr_token
+
+        self.shift_token_if_type_is(TokenType.LBRACE)
+        left = self.parse_bracket()
+        self.shift_token_if_type_is(TokenType.TEX_SYMBOL)
+        if self.curr_token.literal != '\mathrm':
+            raise ParserException(
+                f"\mathrm should be located in combinatorics expression. (as-is : {self.curr_token.literal})"
+            )
+        self.shift_token_if_type_is(TokenType.LBRACE)
+        if not (self.next_token_type_is(TokenType.IDENT) or self.next_token_type_is(TokenType.TEX_SYMBOL)):
+            raise ParserException(
+                f"Identifier should be located after \mathrm. (as-is : {self.curr_token.literal})"
+            )
+        self.shift_token()
+
+        identifier = self.parse_identifier()
+        self.shift_token_if_type_is(TokenType.RBRACE)
+        self.shift_token_if_type_is(TokenType.UNDERSCORE)
+        self.shift_token_if_type_is(TokenType.LBRACE)
+        right = self.parse_bracket()
+        return CombinatoricsExpression(token, identifier, left, right)
