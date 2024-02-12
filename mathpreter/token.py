@@ -1,7 +1,13 @@
+import math
 from enum import Enum
 from typing import Iterable, Union
 
 from mathpreter.utils import is_numeric
+
+CONSTANTS = {
+    "\exp": str(math.e),
+    "\pi": str(math.pi)
+}
 
 
 class TokenType(Enum):
@@ -13,6 +19,11 @@ class TokenType(Enum):
     IDENT = "IDENT"
     NUMBER = "NUMBER"
 
+    TEX_SYMBOL = "TEX_SYMBOL"  # \Cpi, \mathrm
+    TEX_REDUCE_OP = "TEX_REDUCE_OP"  # \sum, \prod
+
+    LET = "let"
+
     ####
     # Arithmetic Operators
     ####
@@ -21,23 +32,18 @@ class TokenType(Enum):
     MULTIPLY = "*"
     DIVIDE = "/"
     MODULO = "%"
-    EXPONENTIATION = "^"
+    HAT = "^"
 
     ####
     # Latex Operators
     ###
     ASSIGN = "="
     UNDERSCORE = "_"
+    SEMICOLON = ";"
 
     ####
     # Specific Latex Syntax
     ####
-    SUM = "\sum"
-    PROD = "\prod"
-    MATH_RM = "\mathrm"
-    CPI = "\Pi"
-    PI = "\pi"
-    E = "\exp"
 
     LPAREN = "("
     RPAREN = ")"
@@ -52,31 +58,30 @@ class TokenType(Enum):
             TokenType.MODULO,
             TokenType.MULTIPLY,
             TokenType.DIVIDE,
-            TokenType.EXPONENTIATION,
+            TokenType.HAT,
 
             TokenType.ASSIGN,
             TokenType.UNDERSCORE,
+            TokenType.SEMICOLON,
 
             TokenType.LPAREN,
             TokenType.RPAREN,
             TokenType.LBRACE,
-            TokenType.RBRACE
+            TokenType.RBRACE,
+
         )
 
     @classmethod
-    def latex_words(cls) -> Iterable["TokenType"]:
+    def latex_syntax(cls) -> Iterable[str]:
         """ latex words
 
         :return:
         """
-        return (
-            TokenType.SUM,
-            TokenType.PROD,
-            TokenType.MATH_RM,
-            TokenType.CPI,
-            TokenType.PI,
-            TokenType.E,
-        )
+        return ("\sum", "\prod",)
+
+    @classmethod
+    def reserved_words(cls) -> Iterable["TokenType"]:
+        return (TokenType.LET,)
 
     def __hash__(self):
         return hash(self.value)
@@ -99,6 +104,7 @@ class Token:
         return token
 
     def __init__(self, word: str):
+        global CONSTANTS
         word = word.strip()
 
         if not word:
@@ -112,7 +118,19 @@ class Token:
                 self.literal = word
                 return
 
-        for token in TokenType.latex_words():
+        for token in TokenType.latex_syntax():
+            if word == token:
+                self.type = TokenType.TEX_REDUCE_OP
+                self.literal = word
+                return
+
+        for k, v in CONSTANTS.items():
+            if word == k:
+                self.type = TokenType.NUMBER
+                self.literal = v
+                return
+
+        for token in TokenType.reserved_words():
             if word == token:
                 self.type = token
                 self.literal = word
@@ -123,6 +141,9 @@ class Token:
             self.literal = word
         elif word[0].isalpha() and word.isalnum():
             self.type = TokenType.IDENT
+            self.literal = word
+        elif word[0] == '\\' and word[1:].isalpha():
+            self.type = TokenType.TEX_SYMBOL
             self.literal = word
         else:
             self.type = TokenType.ILLEGAL

@@ -3,6 +3,16 @@ from mathpreter.token import Token, TokenType
 
 WHITESPACE_CHARS = {" ", "\n", "\t", "\r"}
 
+"""
+Additionally handling cases
+
+1. underscore(_) and hat(^) without bracket
+* 123_bcd^234 => {123}_bcd^{234}
+or
+* 123_bcd^234 => 12{3}_{b}cd^{2}34
+which case is better suitable for our lexing system?
+"""
+
 
 class Lexer:
     """
@@ -37,15 +47,17 @@ class Lexer:
     def next_token(self) -> Token:
         self.skip_whitespace()
 
-        if self.char.isalpha():
+        if self.char.isalpha() or self.char == '\\':
             return self.read_identifier()
         elif self.char.isnumeric():
             return self.read_number()
-        elif self.char == '\\':
-            return self.read_latex_reserved_words()
         elif self.char in TokenType.symbols():
             token = Token(self.char)
+            self.next_char()
             return token
+        elif self.char == '':
+            self.next_char()
+            return Token("")
 
         # lexing is failed...
         raise LexerException(f"lexing is failed. position: {self.c_pos}")
@@ -53,7 +65,7 @@ class Lexer:
     def read_identifier(self) -> Token:
         start = self.c_pos
         while True:
-            if not self.next_char().isalpha():
+            if not self.next_char().isalnum():
                 break
         end = self.c_pos
         text = self.equation_text[start: end]
@@ -76,19 +88,6 @@ class Lexer:
         end = self.c_pos
         text = self.equation_text[start: end]
         return Token(text)
-
-    def read_latex_reserved_words(self) -> Token:
-        pos = self.c_pos
-
-        for latex_word in TokenType.latex_words():
-            length = len(latex_word.value)
-            word = self.equation_text[pos:pos + length]
-            if word == latex_word.value:
-                for _ in range(length):
-                    self.next_char()
-                return Token(word)
-
-        raise LexerException(f"Lexing is failed. not found latex words. position: {self.c_pos}")
 
     def skip_whitespace(self):
         global WHITESPACE_CHARS
