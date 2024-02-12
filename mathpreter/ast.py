@@ -153,16 +153,33 @@ class InfixExpression(Expression):
         return f"({self.left}{self.operator}{self.right})"
 
 
-class ReducerExpression(Expression):
+class MathReducerExpression(Expression):
     """시그마 혹은 곱기호 표현식
     1. 합기호
-    \sum_{k=1}^7 k^2
+    \sum_{k=1}^{7} {k^2}
 
     2. 곱기호
-    \prod_{i=1}^5 (i+1)
+    \prod_{i=1}^{5} (i+1)
     """
+    token: Token
 
-    pass
+    identifier: Identifier
+    start: Expression
+    end: Expression
+    body: Expression
+
+    def __init__(self, token: Token, identifier: Identifier, start: Expression, end: Expression, body: Expression):
+        self.token = token
+        self.identifier = identifier
+        self.start = start
+        self.end = end
+        self.body = body
+
+    def literal(self) -> str:
+        return self.token.literal
+
+    def __str__(self):
+        return f"{self.token.literal}_{{{self.identifier}={self.start}}}^{{{self.end}}}{{{self.body}}}"
 
 
 class CombinatoricsExpression(Expression):
@@ -179,4 +196,19 @@ class CombinatoricsExpression(Expression):
     3. combination with repetition(중복 조합)
     : _{n}\mathrm{\Pi}_{k}
     """
-    pass
+    token: Token
+    left: Expression
+    body: Expression
+    right: Expression
+
+    def __init__(self, token: Token, left: Expression, body: Expression, right: Expression):
+        self.token = token
+        self.left = left
+        self.body = body
+        self.right = right
+
+    def literal(self) -> str:
+        return self.token.literal
+
+    def __str__(self):
+        return f"_{{{self.left}}}\mathrm{{{self.body.literal()}}}_{{{self.right}}})"

@@ -18,14 +18,14 @@ from mathpreter.token import TokenType, Token
         ("*", TokenType.MULTIPLY),
         ("/", TokenType.DIVIDE),
         ("%", TokenType.MODULO),
-        ("^", TokenType.EXPONENTIATION),
+        ("^", TokenType.HAT),
         ("_", TokenType.UNDERSCORE),
         (";", TokenType.SEMICOLON),
         ('let', TokenType.LET),
 
-        ("\sum", TokenType.TEX_OPERATOR),
-        ("\prod", TokenType.TEX_OPERATOR),
-        ("\mathrm", TokenType.TEX_OPERATOR),
+        ("\sum", TokenType.TEX_REDUCE_OP),
+        ("\prod", TokenType.TEX_REDUCE_OP),
+        ("\mathrm", TokenType.TEX_SYMBOL),
 
         ("\pi", TokenType.NUMBER),
         ("\exp", TokenType.NUMBER),

@@ -19,8 +19,8 @@ class TokenType(Enum):
     IDENT = "IDENT"
     NUMBER = "NUMBER"
 
-    TEX_SYMBOL = "TEX_SYMBOL"  # \Cpi
-    TEX_OPERATOR = "TEX_SYNTAX"  # \sum, \prod, \math_rm
+    TEX_SYMBOL = "TEX_SYMBOL"  # \Cpi, \mathrm
+    TEX_REDUCE_OP = "TEX_REDUCE_OP"  # \sum, \prod
 
     LET = "let"
 
@@ -32,7 +32,7 @@ class TokenType(Enum):
     MULTIPLY = "*"
     DIVIDE = "/"
     MODULO = "%"
-    EXPONENTIATION = "^"
+    HAT = "^"
 
     ####
     # Latex Operators
@@ -58,7 +58,7 @@ class TokenType(Enum):
             TokenType.MODULO,
             TokenType.MULTIPLY,
             TokenType.DIVIDE,
-            TokenType.EXPONENTIATION,
+            TokenType.HAT,
 
             TokenType.ASSIGN,
             TokenType.UNDERSCORE,
@@ -77,7 +77,7 @@ class TokenType(Enum):
 
         :return:
         """
-        return ("\sum", "\prod", "\mathrm")
+        return ("\sum", "\prod",)
 
     @classmethod
     def reserved_words(cls) -> Iterable["TokenType"]:
@@ -120,7 +120,7 @@ class Token:
 
         for token in TokenType.latex_syntax():
             if word == token:
-                self.type = TokenType.TEX_OPERATOR
+                self.type = TokenType.TEX_REDUCE_OP
                 self.literal = word
                 return
 

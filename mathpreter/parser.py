@@ -4,7 +4,7 @@ from typing import List, Dict, Callable, Optional
 from mathpreter.ast import (
     Expression, Program, Statement,
     LetStatement, Identifier, ExpressionStatement,
-    PrefixExpression, NumberLiteral, InfixExpression
+    PrefixExpression, NumberLiteral, InfixExpression, MathReducerExpression
 )
 from mathpreter.errors import ParserException
 from mathpreter.lexer import Lexer
@@ -32,7 +32,7 @@ PRECEDENCE_RELATION = {
     TokenType.MINUS: OperatorPriority.SUM,
     TokenType.DIVIDE: OperatorPriority.PRODUCT,
     TokenType.MULTIPLY: OperatorPriority.PRODUCT,
-    TokenType.EXPONENTIATION: OperatorPriority.EXPONENTIONAL
+    TokenType.HAT: OperatorPriority.EXPONENTIONAL
 }
 
 
@@ -65,6 +65,7 @@ class Parser:
         self.prefix_parse_fns[TokenType.NUMBER] = self.parse_number
         self.prefix_parse_fns[TokenType.MINUS] = self.parse_prefix_single_expression
         self.prefix_parse_fns[TokenType.LPAREN] = self.parse_grouped_expression
+        self.prefix_parse_fns[TokenType.TEX_REDUCE_OP] = self.parse_prefix_reducer_expression
 
     def register_infix_parse_fns(self):
         self.infix_parse_fns = {}
@@ -73,7 +74,7 @@ class Parser:
         self.infix_parse_fns[TokenType.MULTIPLY] = self.parse_infix_arithmetic_expression
         self.infix_parse_fns[TokenType.DIVIDE] = self.parse_infix_arithmetic_expression
         self.infix_parse_fns[TokenType.MODULO] = self.parse_infix_arithmetic_expression
-        self.infix_parse_fns[TokenType.EXPONENTIATION] = self.parse_infix_arithmetic_expression
+        self.infix_parse_fns[TokenType.HAT] = self.parse_infix_arithmetic_expression
 
     def peek_priority(self) -> OperatorPriority:
         global PRECEDENCE_RELATION
@@ -180,6 +181,51 @@ class Parser:
         self.shift_token()
         right = self.parse_expression(OperatorPriority.PREFIX)
         return PrefixExpression(token, right)
+
+    def parse_prefix_reducer_expression(self) -> MathReducerExpression:
+        token = self.curr_token
+
+        if self.next_token_type_is(TokenType.UNDERSCORE):
+            self.shift_token()
+            identifier, start_cond = self.parse_start_condition_in_math_reducer()
+
+            self.shift_token_if_type_is(TokenType.HAT)
+
+            end_cond = self.parse_stmt_in_math_reducer()
+        elif self.next_token_type_is(TokenType.HAT):
+            self.shift_token()
+            end_cond = self.parse_stmt_in_math_reducer()
+
+            self.shift_token_if_type_is(TokenType.UNDERSCORE)
+
+            identifier, start_cond = self.parse_start_condition_in_math_reducer()
+        else:
+            raise ParserException("parsing failed. `^` and `_` is imssing")
+        body = self.parse_stmt_in_math_reducer()
+        return MathReducerExpression(token, identifier, start_cond, end_cond, body)
+
+    def parse_start_condition_in_math_reducer(self):
+        self.shift_token_if_type_is(TokenType.LBRACE)
+        self.shift_token_if_type_is(TokenType.IDENT)
+        identifier = self.parse_identifier()
+        self.shift_token_if_type_is(TokenType.ASSIGN)
+
+        self.shift_token()
+        start_condition = self.parse_expression(OperatorPriority.LOWEST)
+
+        self.shift_token_if_type_is(TokenType.RBRACE)
+        return identifier, start_condition
+
+    def parse_stmt_in_math_reducer(self):
+        self.shift_token_if_type_is(TokenType.LBRACE)
+        return self.parse_bracket()
+
+    def parse_bracket(self) -> Expression:
+        self.shift_token()
+        expr = self.parse_expression(OperatorPriority.LOWEST)
+
+        self.shift_token_if_type_is(TokenType.RBRACE)
+        return expr
 
     def parse_infix_arithmetic_expression(self, left: Expression) -> InfixExpression:
         global PRECEDENCE_RELATION

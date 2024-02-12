@@ -3,6 +3,16 @@ from mathpreter.token import Token, TokenType
 
 WHITESPACE_CHARS = {" ", "\n", "\t", "\r"}
 
+"""
+Additionally handling cases
+
+1. underscore(_) and hat(^) without bracket
+* 123_bcd^234 => {123}_bcd^{234}
+or
+* 123_bcd^234 => 12{3}_{b}cd^{2}34
+which case is better suitable for our lexing system?
+"""
+
 
 class Lexer:
     """
