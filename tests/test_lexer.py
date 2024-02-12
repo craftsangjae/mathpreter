@@ -1,7 +1,7 @@
 import pytest
 
 from mathpreter.lexer import Lexer
-from mathpreter.token import TokenType, Token
+from mathpreter.token import TokenType
 
 
 @pytest.mark.parametrize(
@@ -19,12 +19,12 @@ from mathpreter.token import TokenType, Token
         ("%", TokenType.MODULO),
         ("_", TokenType.UNDERSCORE),
         (";", TokenType.SEMICOLON),
-        ("\sum", TokenType.SUM),
-        ("\prod", TokenType.PROD),
-        ("\mathrm", TokenType.MATH_RM),
-        ("\Pi", TokenType.CPI),
-        ("\pi", TokenType.PI),
-        ("\exp", TokenType.E),
+        ("\sum", TokenType.TEX_OPERATOR),
+        ("\prod", TokenType.TEX_OPERATOR),
+        ("\mathrm", TokenType.TEX_OPERATOR),
+        ("\Pi", TokenType.TEX_SYMBOL),
+        ("\pi", TokenType.NUMBER),
+        ("\exp", TokenType.NUMBER),
         ("let", TokenType.LET),
         ("(", TokenType.LPAREN),
         (")", TokenType.RPAREN),
@@ -39,23 +39,13 @@ def test_single_size_equation(test_input, expected_type):
 
 
 @pytest.mark.parametrize(
-    "test_input",
-    ["\pbcd", "#123x"]
-)
-def test_check_if_token_is_illegal(test_input):
-    lexer = Lexer(test_input)
-    token = lexer.next_token()
-
-    assert token.type == TokenType.ILLEGAL
-
-
-@pytest.mark.parametrize(
     "test_input,expected_types,expected_values",
     [("32.5+25.2-1",
       [TokenType.NUMBER, TokenType.PLUS, TokenType.NUMBER, TokenType.MINUS, TokenType.NUMBER],
       ["32.5", "+", "25.2", "-", "1"]),
      ("\sum_{x=12}^{19}{3*x}",
-      [TokenType.SUM, TokenType.UNDERSCORE, TokenType.LBRACE, TokenType.IDENT, TokenType.ASSIGN, TokenType.NUMBER,
+      [TokenType.TEX_OPERATOR, TokenType.UNDERSCORE, TokenType.LBRACE, TokenType.IDENT, TokenType.ASSIGN,
+       TokenType.NUMBER,
        TokenType.RBRACE,
        TokenType.EXPONENTIATION, TokenType.LBRACE, TokenType.NUMBER, TokenType.RBRACE, TokenType.LBRACE,
        TokenType.NUMBER, TokenType.MULTIPLY, TokenType.IDENT, TokenType.RBRACE],

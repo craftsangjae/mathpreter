@@ -21,3 +21,23 @@ def test_single_let_statement(test_input, expected_name, expected_value):
 
     assert str(stmt.name) == expected_name
     assert str(stmt.value) == expected_value
+
+
+@pytest.mark.parametrize(
+    "test_input,expected_name,expected_value",
+    [
+        ("let x = 1 + 2;", "x", "(1+2)"),
+        ("let x = 3 + 2 / 3;", "x", "(3+(2/3))"),
+        ("let x = - (5 - 2) ^ 5;", "x", "-((5-2)^5)"),
+    ],
+)
+def test_single_let_statement_with_expression(test_input, expected_name, expected_value):
+    lexer = Lexer(test_input)
+    parser = Parser(lexer)
+    program = parser.parse_program()
+    assert len(program.statements) == 1
+
+    stmt: LetStatement = program.statements[0]
+
+    assert str(stmt.name) == expected_name
+    assert str(stmt.value) == expected_value

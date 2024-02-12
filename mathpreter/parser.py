@@ -1,7 +1,11 @@
-from typing import List, Dict, Callable
+from enum import IntEnum
+from typing import List, Dict, Callable, Optional
 
-from mathpreter.ast import Expression, Program, Statement, LetStatement, Identifier, ExpressionStatement, \
-    PrefixExpression, NumberLiteral
+from mathpreter.ast import (
+    Expression, Program, Statement,
+    LetStatement, Identifier, ExpressionStatement,
+    PrefixExpression, NumberLiteral, InfixExpression
+)
 from mathpreter.errors import ParserException
 from mathpreter.lexer import Lexer
 from mathpreter.token import Token, TokenType
@@ -11,6 +15,25 @@ prefix_parse_ftype = Callable[[], Expression]
 
 # 중위함수 파싱 로직
 infix_parse_ftype = Callable[[Expression], Expression]
+
+
+class OperatorPriority(IntEnum):
+    LOWEST = 1
+    EQUALS = 2
+    LESSGREATER = 3
+    SUM = 4
+    PRODUCT = 5
+    PREFIX = 6
+    EXPONENTIONAL = 7
+
+
+PRECEDENCE_RELATION = {
+    TokenType.PLUS: OperatorPriority.SUM,
+    TokenType.MINUS: OperatorPriority.SUM,
+    TokenType.DIVIDE: OperatorPriority.PRODUCT,
+    TokenType.MULTIPLY: OperatorPriority.PRODUCT,
+    TokenType.EXPONENTIATION: OperatorPriority.EXPONENTIONAL
+}
 
 
 class Parser:
@@ -33,6 +56,7 @@ class Parser:
 
         self.errors = []
         self.register_prefix_parse_fns()
+        self.register_infix_parse_fns()
 
     def register_prefix_parse_fns(self):
         self.prefix_parse_fns = {}
@@ -40,6 +64,20 @@ class Parser:
         self.prefix_parse_fns[TokenType.IDENT] = self.parse_identifier
         self.prefix_parse_fns[TokenType.NUMBER] = self.parse_number
         self.prefix_parse_fns[TokenType.MINUS] = self.parse_prefix_single_expression
+        self.prefix_parse_fns[TokenType.LPAREN] = self.parse_grouped_expression
+
+    def register_infix_parse_fns(self):
+        self.infix_parse_fns = {}
+        self.infix_parse_fns[TokenType.PLUS] = self.parse_infix_arithmetic_expression
+        self.infix_parse_fns[TokenType.MINUS] = self.parse_infix_arithmetic_expression
+        self.infix_parse_fns[TokenType.MULTIPLY] = self.parse_infix_arithmetic_expression
+        self.infix_parse_fns[TokenType.DIVIDE] = self.parse_infix_arithmetic_expression
+        self.infix_parse_fns[TokenType.MODULO] = self.parse_infix_arithmetic_expression
+        self.infix_parse_fns[TokenType.EXPONENTIATION] = self.parse_infix_arithmetic_expression
+
+    def peek_priority(self) -> OperatorPriority:
+        global PRECEDENCE_RELATION
+        return PRECEDENCE_RELATION.get(self.next_token.type, OperatorPriority.LOWEST)
 
     def shift_token(self):
         self.curr_token = self.next_token
@@ -89,40 +127,66 @@ class Parser:
         self.shift_token_if_type_is(TokenType.ASSIGN)
 
         self.shift_token()
-        value = self.parse_expression()
+        value = self.parse_expression(OperatorPriority.LOWEST)
 
         self.skip_if_semicolon_exists()
         return LetStatement(token, name, value)
 
     def parse_expression_statement(self):
         token = self.curr_token
-        expression = self.parse_expression()
+        expression = self.parse_expression(OperatorPriority.LOWEST)
 
         self.skip_if_semicolon_exists()
         return ExpressionStatement(token, expression=expression)
 
-    def parse_expression(self) -> Expression:
+    def parse_expression(self, priority: OperatorPriority) -> Expression:
         left = None
         if prefix_func := self.prefix_parse_fns.get(self.curr_token.type):
             left = prefix_func()
 
+        while (
+                not self.next_token_type_is(TokenType.EOF)
+                and priority < self.peek_priority()
+        ):
+            infix_func = self.infix_parse_fns.get(self.next_token.type)
+
+            if not infix_func:
+                raise ParserException("infix func is not found")
+            self.shift_token()
+            left = infix_func(left)
+            break
+
         return left
 
-    def parse_identifier(self) -> Identifier:
-        identifier = Identifier(self.curr_token)
-
+    def parse_grouped_expression(self) -> Optional[Expression]:
         self.shift_token()
-        return identifier
+
+        expr = self.parse_expression(OperatorPriority.LOWEST)
+
+        if not self.next_token_type_is(TokenType.RPAREN):
+            raise ParserException("Parsing Failed. `)` is missing.")
+        self.shift_token()
+        return expr
+
+    def parse_identifier(self) -> Identifier:
+        return Identifier(self.curr_token)
 
     def parse_number(self) -> NumberLiteral:
-        number = NumberLiteral(self.curr_token)
-
-        self.shift_token()
-        return number
+        return NumberLiteral(self.curr_token)
 
     def parse_prefix_single_expression(self) -> PrefixExpression:
         token = self.curr_token
 
         self.shift_token()
-        right = self.parse_expression()
+        right = self.parse_expression(OperatorPriority.PREFIX)
         return PrefixExpression(token, right)
+
+    def parse_infix_arithmetic_expression(self, left: Expression) -> InfixExpression:
+        global PRECEDENCE_RELATION
+        token = self.curr_token
+
+        self.shift_token()
+        priority = PRECEDENCE_RELATION.get(token.type)
+        right = self.parse_expression(priority)
+
+        return InfixExpression(token, left, right)

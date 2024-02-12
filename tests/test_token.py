@@ -23,12 +23,12 @@ from mathpreter.token import TokenType, Token
         (";", TokenType.SEMICOLON),
         ('let', TokenType.LET),
 
-        ("\sum", TokenType.SUM),
-        ("\prod", TokenType.PROD),
-        ("\mathrm", TokenType.MATH_RM),
-        ("\Pi", TokenType.CPI),
-        ("\pi", TokenType.PI),
-        ("\exp", TokenType.E),
+        ("\sum", TokenType.TEX_OPERATOR),
+        ("\prod", TokenType.TEX_OPERATOR),
+        ("\mathrm", TokenType.TEX_OPERATOR),
+
+        ("\pi", TokenType.NUMBER),
+        ("\exp", TokenType.NUMBER),
 
         ("(", TokenType.LPAREN),
         (")", TokenType.RPAREN),
@@ -42,13 +42,7 @@ def test_initialize_token(test_input, expected):
 
 @pytest.mark.parametrize(
     "test_input",
-    ["1a", "\su", "1231.abc"],
+    ["1a", "\s1u", "1231.abc"],
 )
 def test_illegal_token(test_input):
     assert Token(test_input).type == TokenType.ILLEGAL
-
-
-def test_token_type_equal():
-    assert TokenType.CPI == "\Pi"
-    assert "\Pi" in {TokenType.CPI}
-    assert "\Pi" not in {TokenType.PI}

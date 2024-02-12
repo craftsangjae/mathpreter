@@ -135,7 +135,22 @@ class PrefixExpression(Expression):
 
 class InfixExpression(Expression):
     """중위연산자 표현식"""
-    pass
+    token: Token
+    left: Expression
+    operator: str
+    right: Expression
+
+    def __init__(self, token: Token, left: Expression, right: Expression):
+        self.token = token
+        self.left = left
+        self.operator = token.literal
+        self.right = right
+
+    def literal(self) -> str:
+        return self.token.literal
+
+    def __str__(self):
+        return f"({self.left}{self.operator}{self.right})"
 
 
 class ReducerExpression(Expression):
