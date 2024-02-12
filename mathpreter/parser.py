@@ -200,7 +200,7 @@ class Parser:
 
             identifier, start_cond = self.parse_start_condition_in_math_reducer()
         else:
-            raise ParserException("parsing failed. `^` and `_` is imssing")
+            raise ParserException("parsing failed. `^` and `_` is missing")
         body = self.parse_stmt_in_math_reducer()
         return MathReducerExpression(token, identifier, start_cond, end_cond, body)
 
